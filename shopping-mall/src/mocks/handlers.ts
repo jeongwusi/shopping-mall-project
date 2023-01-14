@@ -1,4 +1,4 @@
-import { CartType } from "./../graphql/cart";
+import { CartType, UPDATE_CART } from "./../graphql/cart";
 import { GET_PRODUCT } from "./../graphql/products";
 import { graphql } from "msw";
 import GET_PRODUCTS from "../graphql/products";
@@ -18,7 +18,7 @@ let cartData: { [key: string]: CartType } = {};
 
 export const handlers = [
   graphql.query(GET_PRODUCTS, (req, res, ctx) => {
-    return res( 
+    return res(
       ctx.data({
         products: mockProducts,
       })
@@ -49,6 +49,19 @@ export const handlers = [
         };
       }
     }
+    cartData = newData;
+    return res(ctx.data(newData));
+  }),
+  graphql.mutation(UPDATE_CART, (req, res, ctx) => {
+    const newData = { ...cartData };
+    const { id, amount } = req.variables;
+    if (!newData[id]) {
+      throw new Error("없는 데이터입니다");
+    }
+    newData[id] = {
+      ...newData[id],
+      amount,
+    };
     cartData = newData;
     return res(ctx.data(newData));
   }),
