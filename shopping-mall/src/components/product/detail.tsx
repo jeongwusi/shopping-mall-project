@@ -1,25 +1,15 @@
-import { Product } from "../../types";
+import { Product } from "../../graphql/products";
 
-const ProductDetail = ({
-  item: {
-    category,
-    title,
-    image,
-    description,
-    price,
-    rating: { rate },
-  },
+const ProductDetail = ({ item: { title, imageUrl, description, price },
 }: {
   item: Product;
 }) => (
   <div className="product-deteail">
-    <p className="product-deteail__category">{category}</p>
     <p className="product-deteail__title">{title}</p>
-    <img className="product-deteail__image" src={image} />
+    <img className="product-deteail__image" src={imageUrl} />
     <p className="product-deteail__description">{description}</p>
     <span className="product-deteail__price">${price}</span>
-    <span className="product-deteail__rating">{rate}</span>
   </div>
-);
+); 
 
 export default ProductDetail;
