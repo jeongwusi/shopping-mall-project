@@ -1,11 +1,45 @@
 import { SyntheticEvent } from "react";
 import { useMutation } from "react-query";
 import { CartType, UPDATE_CART } from "../../graphql/cart";
-import { graphqlFetcher } from "../../queryClient";
+import { getClient, graphqlFetcher, QueryKeys } from "../../queryClient";
 
 const CartItem = ({ id, imageUrl, price, title, amount }: CartType) => {
-  const { mutate: updateCart } = useMutation(({ id, amount }: { id: string; amount: number }) =>
+  const queryClient = getClient();
+  const { mutate: updateCart } = useMutation(
+    ({ id, amount }: { id: string; amount: number }) =>
       graphqlFetcher(UPDATE_CART, { id, amount }),
+    {
+      onMutate: async ({ id, amount }) => {
+        await queryClient.cancelQueries(QueryKeys.CART);
+
+        // Snapshot the previous value
+        const prevCart = queryClient.getQueryData<{ [key: string]: CartType }>(
+          QueryKeys.CART
+        );
+        if (!prevCart?.[id]) return prevCart;
+
+        // Optimistically update to the new value
+        const newCart = {
+          ...(prevCart || {}),
+          [id]: { ...prevCart[id], amount },
+        };
+        queryClient.setQueryData(QueryKeys.CART, newCart);
+
+        // Return a context object with the snapshotted value
+        return prevCart;
+      },
+      onSuccess: (newValue) => {
+        // item 하나에 대한 데이터
+        const prevCart = queryClient.getQueryData<{
+          [key: string]: CartType;
+        }>(QueryKeys.CART);
+        const newCart = {
+          ...(prevCart || {}),
+          [id]: newValue,
+        };
+        queryClient.setQueryData(QueryKeys.CART, newCart); // Cart 전체에 대한 데이터
+      },
+    }
   );
 
   const handleUpdateAmount = (e: SyntheticEvent) => {

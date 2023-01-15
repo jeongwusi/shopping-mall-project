@@ -33,24 +33,24 @@ export const handlers = [
     return res(ctx.data(cartData));
   }),
   graphql.mutation(ADD_CART, (req, res, ctx) => {
-    const newData = { ...cartData };
+    const newCartData = { ...cartData };
     const id = req.variables.id;
-    if (newData[id]) {
-      newData[id] = {
-        ...newData[id],
-        amount: (newData[id].amount || 0) + 1,
-      };
-    } else {
-      const found = mockProducts.find((item) => item.id === req.variables.id);
-      if (found) {
-        newData[id] = {
-          ...found,
-          amount: 1,
-        };
-      }
+    const targetProduct = mockProducts.find(
+      (item) => item.id === req.variables.id
+    );
+
+    if (!targetProduct) {
+      throw new Error("상품이 없습니다.");
     }
-    cartData = newData;
-    return res(ctx.data(newData));
+
+    const newItem = {
+      ...targetProduct,
+      amount: (newCartData[id]?.amount || 0) + 1,
+    };
+    newCartData[id] = newItem;
+
+    cartData = newCartData;
+    return res(ctx.data(newItem));
   }),
   graphql.mutation(UPDATE_CART, (req, res, ctx) => {
     const newData = { ...cartData };
@@ -58,11 +58,12 @@ export const handlers = [
     if (!newData[id]) {
       throw new Error("없는 데이터입니다");
     }
-    newData[id] = {
+    const newItem = {
       ...newData[id],
       amount,
     };
+    newData[id] = newItem;
     cartData = newData;
-    return res(ctx.data(newData));
+    return res(ctx.data(newItem));
   }),
 ];
