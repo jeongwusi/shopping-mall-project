@@ -1,4 +1,4 @@
-import { CartType, UPDATE_CART } from "./../graphql/cart";
+import { CartType, DELETE_CART, UPDATE_CART } from "./../graphql/cart";
 import { GET_PRODUCT } from "./../graphql/products";
 import { graphql } from "msw";
 import GET_PRODUCTS from "../graphql/products";
@@ -66,4 +66,10 @@ export const handlers = [
     cartData = newData;
     return res(ctx.data(newItem));
   }),
+  graphql.mutation(DELETE_CART, ({variables: { id } }, res, ctx) => {
+    const newData = { ...cartData}
+    delete newData[id]
+    cartData = newData
+    return res(ctx.data(id))
+  })
 ];
