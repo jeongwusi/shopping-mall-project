@@ -1,9 +1,5 @@
-import React from 'react'
+import Payment from "../../components/payment"
 
-const index = () => {
-  return (
-    <div>index</div>
-  )
-}
+const PaymentPage = () => <Payment />
 
-export default index
+export default PaymentPage
