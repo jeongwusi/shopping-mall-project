@@ -1,22 +1,34 @@
 import { useState } from "react";
+import { useMutation } from "react-query";
 import { useNavigate } from "react-router-dom";
-import { useSetRecoilState } from "recoil";
+import { useRecoilState } from "recoil";
+import { EXECUTE_PAY } from "../../graphql/payment";
+import { graphqlFetcher } from "../../queryClient";
 import { checkedCartState } from "../../recoils/cart";
 import WillPay from "../willPay";
 import PaymentModal from "./modal";
 
+type PayInfo = {
+  id: string;
+  amount: number;
+};
+type PaymentInfos = PayInfo[];
+
 const Payment = () => {
   const navigate = useNavigate();
-  const setCheckedCartData = useSetRecoilState(checkedCartState);
+  const [checkedCartData, setCheckedCartData] =
+    useRecoilState(checkedCartState);
   const [modalShown, toggleModal] = useState(false);
-
+  const { mutate: executePay } = useMutation((payInfos: PaymentInfos) =>
+    graphqlFetcher(EXECUTE_PAY, payInfos)
+  );
   const showModal = () => {
     toggleModal(true);
   };
 
   const proceed = () => {
-    // 결제진행!
-
+    const payInfos = checkedCartData.map(({ id, amount }) => ({ id, amount }));
+    executePay(checkedCartData);
     setCheckedCartData([]);
     navigate("/products", { replace: true });
   };
