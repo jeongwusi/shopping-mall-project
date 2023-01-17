@@ -3,11 +3,12 @@ import { GET_PRODUCT } from "./../graphql/products";
 import { graphql } from "msw";
 import GET_PRODUCTS from "../graphql/products";
 import { GET_CART, ADD_CART } from "../graphql/cart";
+import { EXECUTE_PAY } from "../graphql/payment";
 
 const mockProducts = (() =>
   Array.from({ length: 20 }).map((_, i) => ({
     id: i + 1 + "",
-    imageUrl: `https://placeimg.com/200/150/${i + 1}`,
+    imageUrl: `https://picsum.photos/id/${i + 10}/200/150`,
     price: 50000,
     title: `임시상품${i + 1}`,
     description: `임시상세내용${i + 1}`,
@@ -66,10 +67,16 @@ export const handlers = [
     cartData = newData;
     return res(ctx.data(newItem));
   }),
-  graphql.mutation(DELETE_CART, ({variables: { id } }, res, ctx) => {
-    const newData = { ...cartData}
-    delete newData[id]
-    cartData = newData
-    return res(ctx.data(id))
-  })
+  graphql.mutation(DELETE_CART, ({ variables: { id } }, res, ctx) => {
+    const newData = { ...cartData };
+    delete newData[id];
+    cartData = newData;
+    return res(ctx.data(id));
+  }),
+  graphql.mutation(EXECUTE_PAY, ({ variables: ids }, res, ctx) => {
+    ids.forEach((id: string) => {
+      delete cartData[id];
+    });
+    return res(ctx.data(ids));
+  }),
 ];
