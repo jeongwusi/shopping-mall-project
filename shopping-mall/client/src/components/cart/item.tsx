@@ -5,7 +5,7 @@ import { getClient, graphqlFetcher, QueryKeys } from "../../queryClient";
 import ItemData from "./itemData";
 
 const CartItem = (
-  { id, imageUrl, price, title, amount }: CartType,
+  { id, product: { imageUrl, price, title }, amount }: CartType,
   ref: ForwardedRef<HTMLInputElement>
 ) => {
   const queryClient = getClient();
@@ -15,33 +15,27 @@ const CartItem = (
     {
       onMutate: async ({ id, amount }) => {
         await queryClient.cancelQueries(QueryKeys.CART);
+        const { cart: prevCart } = queryClient.getQueryData<{ cart: CartType[]}>(QueryKeys.CART) || { cart: [] }
+        if (!prevCart) return null
 
-        // Snapshot the previous value
-        const prevCart = queryClient.getQueryData<{ [key: string]: CartType }>(
-          QueryKeys.CART
-        );
-        if (!prevCart?.[id]) return prevCart;
+        const targetIndex = prevCart.findIndex(cartItem => cartItem.id === id)
+        if (targetIndex === undefined || targetIndex < 0) return prevCart
 
-        // Optimistically update to the new value
-        const newCart = {
-          ...(prevCart || {}),
-          [id]: { ...prevCart[id], amount },
-        };
-        queryClient.setQueryData(QueryKeys.CART, newCart);
-
-        // Return a context object with the snapshotted value
+        const newCart = [...prevCart]
+        newCart.splice(targetIndex, 1, { ...newCart[targetIndex], amount })
+        queryClient.setQueryData(QueryKeys.CART, { cart: newCart });
         return prevCart;
       },
-      onSuccess: (newValue) => {
+      onSuccess: ({ updateCart }) => {
         // item 하나에 대한 데이터
-        const prevCart = queryClient.getQueryData<{
-          [key: string]: CartType;
-        }>(QueryKeys.CART);
-        const newCart = {
-          ...(prevCart || {}),
-          [id]: newValue,
-        };
-        queryClient.setQueryData(QueryKeys.CART, newCart); // Cart 전체에 대한 데이터
+        const { cart: prevCart} = queryClient.getQueryData<{ cart: CartType[]}>(QueryKeys.CART) || { cart: [] }
+        const targetIndex = prevCart?.findIndex(cartItem => cartItem.id === updateCart.id)
+
+        if (!prevCart || targetIndex === undefined || targetIndex < 0) return
+
+        const newCart = [...prevCart]
+        newCart.splice(targetIndex, 1, updateCart)
+        queryClient.setQueryData(QueryKeys.CART, { cart: newCart }); // Cart 전체에 대한 데이터
       },
     }
   );
