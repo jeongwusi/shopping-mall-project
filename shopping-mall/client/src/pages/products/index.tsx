@@ -1,11 +1,18 @@
-import { useQuery } from "react-query";
+import { useInfiniteQuery } from "react-query";
 import GET_PRODUCTS, { Products } from "../../graphql/products";
 import { graphqlFetcher, QueryKeys } from "../../queryClient";
 import ProductList from "../../components/product/list";
 
 const ProductListPage = () => {
-  const { data } = useQuery<Products>(QueryKeys.PRODUCTS, () =>
-    graphqlFetcher(GET_PRODUCTS)
+  const { data, fetchNextPage, hasNextPage } = useInfiniteQuery<Products>(
+    QueryKeys.PRODUCTS,
+    ({ pageParam = "" }) => graphqlFetcher(GET_PRODUCTS, { cursor: pageParam }),
+    {
+      getNextPageParam: (lastPage, allPages) => {
+        console.log(lastPage, allPages);
+        lastPage.products.at(-1)?.id;
+      },
+    }
   );
 
   return (
