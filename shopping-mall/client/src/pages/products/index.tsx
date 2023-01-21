@@ -7,14 +7,11 @@ import useIntersection from "../../components/hooks/useIntersection";
 
 const ProductListPage = () => {
   const fetchMoreRef = useRef<HTMLDivElement>(null);
-  const intersecting = useIntersection(fetchMoreRef)
-  
-
-  
+  const intersecting = useIntersection(fetchMoreRef);
 
   const { data, isSuccess, isFetchingNextPage, fetchNextPage, hasNextPage } =
     useInfiniteQuery<Products>(
-      QueryKeys.PRODUCTS,
+      [QueryKeys.PRODUCTS, false],
       ({ pageParam = "" }) =>
         graphqlFetcher(GET_PRODUCTS, { cursor: pageParam }),
       {
@@ -25,7 +22,7 @@ const ProductListPage = () => {
     );
 
   useEffect(() => {
-    if (!intersecting || !isSuccess || !hasNextPage && isFetchingNextPage)
+    if (!intersecting || !isSuccess || (!hasNextPage && isFetchingNextPage))
       return;
     fetchNextPage();
   }, [intersecting]);
