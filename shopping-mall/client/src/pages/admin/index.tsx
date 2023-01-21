@@ -4,6 +4,8 @@ import { graphqlFetcher, QueryKeys } from "../../queryClient";
 import ProductList from "../../components/product/list";
 import { useEffect, useRef } from "react";
 import useIntersection from "../../components/hooks/useIntersection";
+import AdminItem from "../../components/admin/item";
+import AddForm from "../../components/admin/addForm";
 
 const AdminPage = () => {
   const fetchMoreRef = useRef<HTMLDivElement>(null);
@@ -30,7 +32,8 @@ const AdminPage = () => {
   return (
     <div>
       <h2>어드민</h2>
-      <ProductList list={data?.pages || []} />
+      <AddForm />
+      <ProductList list={data?.pages || []} Item={AdminItem} />
       <div ref={fetchMoreRef} />
     </div>
   );
