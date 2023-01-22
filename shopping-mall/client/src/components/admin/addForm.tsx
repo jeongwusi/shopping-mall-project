@@ -1,41 +1,62 @@
 import { SyntheticEvent } from "react";
 import { useMutation } from "react-query";
-import { ADD_PRODUCT, Product } from "../../graphql/products";
-import { graphqlFetcher } from "../../queryClient";
+import { ADD_PRODUCT, Product, Products } from "../../graphql/products";
+import { getClient, graphqlFetcher, QueryKeys } from "../../queryClient";
 import arrToObj from "../../util/arrToObj";
 
 type OmittedProduct = Omit<Product, "id" | "createdAt">;
 
 const AddForm = () => {
+  const queryClient = getClient();
+
   const { mutate: addProduct } = useMutation(
     ({ title, imageUrl, price, description }: OmittedProduct) =>
-      graphqlFetcher(ADD_PRODUCT, { title, imageUrl, price, description })
-    // {
-    //   onMutate: async ({ id, amount }) => {
-    //     await queryClient.cancelQueries(QueryKeys.CART);
-    //     const { cart: prevCart } = queryClient.getQueryData<{ cart: CartType[]}>(QueryKeys.CART) || { cart: [] }
-    //     if (!prevCart) return null
+      graphqlFetcher(ADD_PRODUCT, { title, imageUrl, price, description }),
+    {
+      onSuccess: ({ addProduct }) => {
+        // 데이터를 stale처리해서 재요청하게끔 함. =>
+        // 장점: 코드가 간단하다. 쉽다
+        // 단점: 서버 요청을 또 한다.
+        queryClient.invalidateQueries(QueryKeys.PRODUCTS, {
+          exact: false,
+          refetchInactive: true,
+        })
 
-    //     const targetIndex = prevCart.findIndex(cartItem => cartItem.id === id)
-    //     if (targetIndex === undefined || targetIndex < 0) return prevCart
+        // 응답결과만으로 캐시 업데이트 => 장단점 반대.
+        // const adminData = queryClient.getQueriesData<{
+        //   pageParams: (number | undefined)[];
+        //   pages: Products[];
+        // }>([QueryKeys.PRODUCTS, true]);
 
-    //     const newCart = [...prevCart]
-    //     newCart.splice(targetIndex, 1, { ...newCart[targetIndex], amount })
-    //     queryClient.setQueryData(QueryKeys.CART, { cart: newCart });
-    //     return prevCart;
-    //   },
-    //   onSuccess: ({ updateCart }) => {
-    //     // item 하나에 대한 데이터
-    //     const { cart: prevCart} = queryClient.getQueryData<{ cart: CartType[]}>(QueryKeys.CART) || { cart: [] }
-    //     const targetIndex = prevCart?.findIndex(cartItem => cartItem.id === updateCart.id)
+        // const [adminKey, { pageParams: adminParams, pages: adminPages }] =
+        //   adminData[0];
+        // const newAdminPages = [...adminPages];
+        // newAdminPages[0].products = [addProduct, ...newAdminPages[0].products];
+        // queryClient.setQueriesData(adminKey, {
+        //   pageParms: adminParams,
+        //   pages: newAdminPages,
+        // });
 
-    //     if (!prevCart || targetIndex === undefined || targetIndex < 0) return
+        // const productsData = queryClient.getQueriesData<{
+        //   pageParams: (number | undefined)[];
+        //   pages: Product[];
+        // }>([QueryKeys.PRODUCTS, false]);
 
-    //     const newCart = [...prevCart]
-    //     newCart.splice(targetIndex, 1, updateCart)
-    //     queryClient.setQueryData(QueryKeys.CART, { cart: newCart }); // Cart 전체에 대한 데이터
-    //   },
-    // }
+        // const [
+        //   productsKey,
+        //   { pageParams: productsParams, pages: productsPages },
+        // ] = productsData[0];
+        // const newProductsPages = [...productsPages];
+        // newProductsPages[0].products = [
+        //   addProduct,
+        //   ...newProductsPages[0].products,
+        // ];
+        // queryClient.setQueriesData(productsKey, {
+        //   pageParms: productsParams,
+        //   pages: newProductsPages,
+        // });
+      },
+    }
   );
 
   const handleSubmit = (e: SyntheticEvent) => {

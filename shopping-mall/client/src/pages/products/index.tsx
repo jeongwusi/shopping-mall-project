@@ -12,11 +12,11 @@ const ProductListPage = () => {
 
   const { data, isSuccess, isFetchingNextPage, fetchNextPage, hasNextPage } =
     useInfiniteQuery<Products>(
-      [QueryKeys.PRODUCTS, false],
+      [QueryKeys.PRODUCTS, "products"],
       ({ pageParam = "" }) =>
         graphqlFetcher(GET_PRODUCTS, { cursor: pageParam }),
       {
-        getNextPageParam: (lastPage, allPages) => {
+        getNextPageParam: (lastPage) => {
           return lastPage.products.at(-1)?.id;
         },
       }
